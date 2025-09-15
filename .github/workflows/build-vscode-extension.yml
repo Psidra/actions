@@ -53,9 +53,9 @@ jobs:
       - name: Build (optional)
         run: |
           if [ -n "${{ inputs.build_script }}" ] && [ "${{ inputs.build_script }}" != "skip" ]; then
-            if [ "${{ inputs.package_manager }}" = "pnpm" ]; then pnpm run build; \
-            elif [ "${{ inputs.package_manager }}" = "yarn" ]; then yarn build; \
-            else npm run build; fi
+            ${{
+              inputs.build_script
+            }}
           fi
 
       - name: Package VS Code extension (.vsix)
