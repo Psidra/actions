@@ -1,0 +1,44 @@
+name: reusable-release-please
+on:
+  workflow_call:
+    inputs:
+      release_type:
+        required: false
+        type: string
+        default: simple
+      package_name:
+        required: false
+        type: string
+        default: ${{ github.event.repository.name }}
+      bump_minor_pre_major:
+        required: false
+        type: boolean
+        default: true
+      changelog_types_json:
+        required: false
+        type: string
+        default: >-
+          [
+            { "type": "feat", "section": "Features", "hidden": false },
+            { "type": "fix", "section": "Bug Fixes", "hidden": false },
+            { "type": "docs", "section": "Documentation", "hidden": false },
+            { "type": "chore", "section": "Miscellaneous", "hidden": true }
+          ]
+    secrets:
+      token:
+        required: false
+permissions:
+  contents: write
+  pull-requests: write
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Release Please
+        uses: googleapis/release-please-action@v4
+        with:
+          release-type: ${{ inputs.release_type }}
+          package-name: ${{ inputs.package_name }}
+          bump-minor-pre-major: ${{ inputs.bump_minor_pre_major }}
+          changelog-types: ${{ inputs.changelog_types_json }}
+          token: ${{ secrets.token || secrets.GITHUB_TOKEN }}
