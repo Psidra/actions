@@ -1,0 +1,32 @@
+name: reusable-commitlint
+on:
+  workflow_call:
+    inputs:
+      commitlint_config_json:
+        required: false
+        type: string
+        default: >-
+          {
+            "rules": {
+              "type-enum": [2, "always", ["feat","fix","docs","style","refactor","perf","test","build","ci","chore","revert"]],
+              "subject-case": [2, "never", ["sentence-case","start-case","pascal-case","upper-case"]],
+              "header-max-length": [2, "always", 72]
+            }
+          }
+permissions:
+  contents: read
+  pull-requests: read
+  statuses: write
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Write commitlint config
+        run: |
+          echo '${{ inputs.commitlint_config_json }}' > .commitlintrc.json
+      - uses: wagoid/commitlint-github-action@v6
+        with:
+          configFile: .commitlintrc.json

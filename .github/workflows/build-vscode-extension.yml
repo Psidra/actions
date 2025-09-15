@@ -1,0 +1,80 @@
+name: reusable-build-vscode-extension
+on:
+  workflow_call:
+    inputs:
+      node_version:
+        required: false
+        type: string
+        default: "20"
+      package_manager:
+        required: false
+        type: string
+        default: "npm" # npm | pnpm | yarn
+      build_script:
+        required: false
+        type: string
+        default: "npm run build" # set to "skip" to skip build
+      vsix_output_glob:
+        required: false
+        type: string
+        default: "*.vsix"
+    secrets:
+      token:
+        required: false
+permissions:
+  contents: write
+jobs:
+  build-and-attach-vsix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ inputs.node_version }}
+
+      - name: Setup pnpm
+        if: inputs.package_manager == 'pnpm'
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - name: Install dependencies
+        run: |
+          if [ "${{ inputs.package_manager }}" = "pnpm" ]; then
+            pnpm install --frozen-lockfile
+          elif [ "${{ inputs.package_manager }}" = "yarn" ]; then
+            yarn install --frozen-lockfile
+          else
+            npm ci
+          fi
+
+      - name: Build (optional)
+        run: |
+          if [ -n "${{ inputs.build_script }}" ] && [ "${{ inputs.build_script }}" != "skip" ]; then
+            ${{
+              inputs.build_script
+            }}
+          fi
+
+      - name: Package VS Code extension (.vsix)
+        run: npx @vscode/vsce package
+
+      - name: Determine VSIX file
+        id: find_vsix
+        shell: bash
+        run: |
+          file=$(ls ${{ inputs.vsix_output_glob }} | head -n 1)
+          if [ -z "$file" ]; then
+            echo "No VSIX found matching glob '${{ inputs.vsix_output_glob }}'." >&2
+            exit 1
+          fi
+          echo "vsix=$file" >> "$GITHUB_OUTPUT"
+
+      - name: Upload asset to GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: ${{ steps.find_vsix.outputs.vsix }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.token || secrets.GITHUB_TOKEN }}
