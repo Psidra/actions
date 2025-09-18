@@ -18,16 +18,29 @@ on:
         required: false
         type: string
         default: "*.vsix"
+      working_directory:
+        required: false
+        type: string
+        default: "."
+      upload_mode:
+        required: false
+        type: string
+        default: "release" # release | artifact
+      artifact_name:
+        required: false
+        type: string
+        default: "vsix"
     secrets:
       token:
         required: false
 permissions:
   contents: write
 jobs:
-  build-and-attach-vsix:
+  build-and-upload:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
 
       - name: Setup Node
         uses: actions/setup-node@v4
@@ -41,40 +54,81 @@ jobs:
           version: 9
 
       - name: Install dependencies
+        shell: bash
+        working-directory: ${{ inputs.working_directory }}
         run: |
           if [ "${{ inputs.package_manager }}" = "pnpm" ]; then
+            corepack enable
             pnpm install --frozen-lockfile
           elif [ "${{ inputs.package_manager }}" = "yarn" ]; then
             yarn install --frozen-lockfile
           else
-            npm ci
+            if [ -f package-lock.json ]; then
+              npm ci
+            else
+              npm install --no-audit --no-fund
+            fi
           fi
 
       - name: Build (optional)
+        if: inputs.build_script != 'skip'
+        shell: bash
+        working-directory: ${{ inputs.working_directory }}
         run: |
-          if [ -n "${{ inputs.build_script }}" ] && [ "${{ inputs.build_script }}" != "skip" ]; then
-            ${{
-              inputs.build_script
-            }}
+          # Extract script name if build_script starts with "npm run "
+          BUILD_SCRIPT="${{ inputs.build_script }}"
+          if [[ "$BUILD_SCRIPT" =~ ^npm[[:space:]]+run[[:space:]]+(.+) ]]; then
+            SCRIPT_NAME="${BASH_REMATCH[1]}"
+          else
+            SCRIPT_NAME="$BUILD_SCRIPT"
+          fi
+          if [ "${{ inputs.package_manager }}" = "pnpm" ]; then
+            pnpm $SCRIPT_NAME
+          elif [ "${{ inputs.package_manager }}" = "yarn" ]; then
+            yarn $SCRIPT_NAME
+          else
+            $BUILD_SCRIPT
           fi
 
       - name: Package VS Code extension (.vsix)
+        shell: bash
+        working-directory: ${{ inputs.working_directory }}
         run: npx @vscode/vsce package
 
-      - name: Determine VSIX file
+      - name: Determine VSIX files
         id: find_vsix
         shell: bash
+        working-directory: ${{ inputs.working_directory }}
         run: |
-          file=$(ls ${{ inputs.vsix_output_glob }} | head -n 1)
-          if [ -z "$file" ]; then
-            echo "No VSIX found matching glob '${{ inputs.vsix_output_glob }}'." >&2
+          set -euo pipefail
+          matches=( $(ls -1 ${{ inputs.vsix_output_glob }} 2>/dev/null || true) )
+          if [ ${#matches[@]} -eq 0 ]; then
+            echo "No VSIX found matching glob '${{ inputs.vsix_output_glob }}' in $PWD." >&2
             exit 1
           fi
-          echo "vsix=$file" >> "$GITHUB_OUTPUT"
+          # Create a comma-separated list with proper paths for gh-release
+          fullpaths=()
+          for f in "${matches[@]}"; do
+            if [ "${{ inputs.working_directory }}" = "." ]; then
+              fullpaths+=("$f")
+            else
+              fullpaths+=("${{ inputs.working_directory }}/$f")
+            fi
+          done
+          IFS=,; echo "files=${fullpaths[*]}" >> "$GITHUB_OUTPUT"; unset IFS
 
       - name: Upload asset to GitHub Release
+        if: inputs.upload_mode == 'release'
         uses: softprops/action-gh-release@v2
         with:
-          files: ${{ steps.find_vsix.outputs.vsix }}
+          files: ${{ steps.find_vsix.outputs.files }}
         env:
           GITHUB_TOKEN: ${{ secrets.token || secrets.GITHUB_TOKEN }}
+
+      - name: Upload VSIX artifact
+        if: inputs.upload_mode == 'artifact'
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ inputs.artifact_name }}
+          path: |
+            ${{ inputs.working_directory == '.' && inputs.vsix_output_glob || format('{0}/{1}', inputs.working_directory, inputs.vsix_output_glob) }}
