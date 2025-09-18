@@ -124,4 +124,4 @@ jobs:
         with:
           name: ${{ inputs.artifact_name }}
           path: |
-            ${{ inputs.working_directory }}/${{ inputs.vsix_output_glob }}
+            ${{ inputs.working_directory == '.' && inputs.vsix_output_glob || format('{0}/{1}', inputs.working_directory, inputs.vsix_output_glob) }}
