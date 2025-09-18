@@ -75,12 +75,19 @@ jobs:
         shell: bash
         working-directory: ${{ inputs.working_directory }}
         run: |
-          if [ "${{ inputs.package_manager }}" = "pnpm" ]; then
-            pnpm ${{ inputs.build_script }}
-          elif [ "${{ inputs.package_manager }}" = "yarn" ]; then
-            yarn ${{ inputs.build_script }}
+          # Extract script name if build_script starts with "npm run "
+          BUILD_SCRIPT="${{ inputs.build_script }}"
+          if [[ "$BUILD_SCRIPT" =~ ^npm[[:space:]]+run[[:space:]]+(.+) ]]; then
+            SCRIPT_NAME="${BASH_REMATCH[1]}"
           else
-            ${{ inputs.build_script }}
+            SCRIPT_NAME="$BUILD_SCRIPT"
+          fi
+          if [ "${{ inputs.package_manager }}" = "pnpm" ]; then
+            pnpm $SCRIPT_NAME
+          elif [ "${{ inputs.package_manager }}" = "yarn" ]; then
+            yarn $SCRIPT_NAME
+          else
+            $BUILD_SCRIPT
           fi
 
       - name: Package VS Code extension (.vsix)
