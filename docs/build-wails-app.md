@@ -42,6 +42,7 @@ jobs:
       APPLE_CERT_PASSWORD: ${{ secrets.APPLE_CERT_PASSWORD }}
       APPLE_ID: ${{ secrets.APPLE_ID }}
       APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+      APPLE_APP_PASSWORD: ${{ secrets.APPLE_APP_PASSWORD }}
 ```
 
 ## Inputs
@@ -65,6 +66,7 @@ All secrets are optional. If provided, they enable code signing and notarization
 - **APPLE_CERT_PASSWORD** – Password for the Apple certificate
 - **APPLE_ID** – Apple ID for notarization
 - **APPLE_TEAM_ID** – Apple Team ID for notarization
+- **APPLE_APP_PASSWORD** – App-specific password for Apple ID notarization
 
 ### GitHub Token
 - **token** (optional) – GitHub token for uploading release assets (defaults to `GITHUB_TOKEN`)

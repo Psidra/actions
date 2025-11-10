@@ -45,6 +45,9 @@ on:
       APPLE_TEAM_ID:
         required: false
         description: "Apple Team ID for notarization"
+      APPLE_APP_PASSWORD:
+        required: false
+        description: "App-specific password for Apple ID notarization"
       token:
         required: false
         description: "GitHub token for uploading release assets"
@@ -146,7 +149,7 @@ jobs:
         run: |
           # Try to extract version from wails.json
           if [ -f wails.json ]; then
-            VERSION=$(cat wails.json | grep -o '"version"[[:space:]]*:[[:space:]]*"[^"]*"' | cut -d'"' -f4 || echo "dev")
+            VERSION=$(grep -o '"version"[[:space:]]*:[[:space:]]*"[^"]*"' wails.json | cut -d'"' -f4 || echo "dev")
           else
             VERSION="dev"
           fi
@@ -209,7 +212,7 @@ jobs:
 
           # Notarize if credentials are available
           if [ -n "${{ secrets.APPLE_ID }}" ] && [ -n "${{ secrets.APPLE_TEAM_ID }}" ] && [ "$APPLE_SIGNING_ENABLED" = "true" ]; then
-            xcrun notarytool submit "$DMG_NAME" --apple-id "${{ secrets.APPLE_ID }}" --team-id "${{ secrets.APPLE_TEAM_ID }}" --password "${{ secrets.APPLE_CERT_PASSWORD }}" --wait
+            xcrun notarytool submit "$DMG_NAME" --apple-id "${{ secrets.APPLE_ID }}" --team-id "${{ secrets.APPLE_TEAM_ID }}" --password "${{ secrets.APPLE_APP_PASSWORD }}" --wait
             xcrun stapler staple "$DMG_NAME"
           fi
 
@@ -268,7 +271,7 @@ jobs:
           Section: utils
           Priority: optional
           Architecture: ${ARCH}
-          Maintainer: Your Name <your.email@example.com>
+          Maintainer: ${GITHUB_REPOSITORY_OWNER} <noreply@github.com>
           Description: ${APP_NAME} application
            Built with Wails
           EOF
