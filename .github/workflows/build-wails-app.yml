@@ -294,6 +294,10 @@ jobs:
 
           if [ "$PLATFORM" = "windows" ]; then
             EXE_PATH=$(find build/bin -name "*.exe" | head -n 1)
+            if [ -z "$EXE_PATH" ]; then
+              echo "Error: .exe not found"
+              exit 1
+            fi
             ARTIFACT_NAME="${APP_NAME}-${VERSION}-windows-${ARCH}.exe"
             cp "$EXE_PATH" "artifacts/$ARTIFACT_NAME"
             echo "artifacts=artifacts/$ARTIFACT_NAME" >> $GITHUB_OUTPUT
