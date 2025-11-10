@@ -122,6 +122,8 @@ The workflow attempts to extract the version from your `wails.json` file. If not
 4. Add `APPLE_CERT_PASSWORD` secret with the certificate password
 5. Add `APPLE_ID` secret with your Apple ID email
 6. Add `APPLE_TEAM_ID` secret with your Apple Team ID
+7. Generate an app-specific password for your Apple ID at [appleid.apple.com](https://appleid.apple.com) (see "App-Specific Passwords" in your account settings)
+8. Add `APPLE_APP_PASSWORD` secret with the app-specific password
 
 ## Notes
 
