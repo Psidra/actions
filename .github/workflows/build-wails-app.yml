@@ -296,9 +296,9 @@ jobs:
 
           elif [ "$PLATFORM" = "darwin" ]; then
             # Use the DMG created earlier
-            if [ -f "$DMG_NAME" ]; then
-              mv "$DMG_NAME" artifacts/
-              echo "artifacts=artifacts/$DMG_NAME" >> $GITHUB_OUTPUT
+            if [ -f "$DMG_PATH" ]; then
+              mv "$DMG_PATH" artifacts/
+              echo "artifacts=artifacts/$DMG_PATH" >> $GITHUB_OUTPUT
             fi
 
           elif [ "$PLATFORM" = "linux" ]; then
