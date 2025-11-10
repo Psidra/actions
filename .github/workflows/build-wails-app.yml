@@ -340,7 +340,7 @@ jobs:
         run: |
           cd artifacts
           if [ "${{ matrix.platform }}" = "windows" ]; then
-            certutil -hashfile * SHA256 > checksums.txt || sha256sum * > checksums.txt
+            pwsh -Command "Get-ChildItem | ForEach-Object { (Get-FileHash $_.FullName -Algorithm SHA256).Hash + '  ' + $_.Name } | Out-File checksums.txt"
           else
             sha256sum * > checksums.txt
           fi
