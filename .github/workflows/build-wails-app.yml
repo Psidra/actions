@@ -173,6 +173,9 @@ jobs:
           if ($exePath) {
             signtool sign /f $env:CERT_PATH /p $env:CERT_PASSWORD /tr http://timestamp.digicert.com /td sha256 /fd sha256 $exePath
             Write-Host "Signed: $exePath"
+          } else {
+            Write-Error "Error: No .exe file found in build/bin. Build may have failed."
+            exit 1
           }
 
       # macOS: Create .app bundle and .dmg
