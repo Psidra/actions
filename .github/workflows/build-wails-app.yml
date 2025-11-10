@@ -259,7 +259,7 @@ jobs:
 
           # Create control file
           cat > "${DEB_DIR}/DEBIAN/control" << EOF
-          Package: ${APP_NAME}
+          Package: $(echo "${APP_NAME}" | tr '[:upper:]' '[:lower:]')
           Version: ${VERSION}
           Section: utils
           Priority: optional
