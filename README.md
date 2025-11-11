@@ -8,6 +8,7 @@ Centralized reusable GitHub Actions workflows for your repos.
 - `reusable-semantic-pr`: enforces Conventional Commit PR titles.
 - `reusable-commitlint`: lints commit messages on PRs.
 - `reusable-build-vscode-extension`: builds a VS Code `.vsix` and attaches it to Releases.
+- `reusable-build-wails-app`: builds cross-platform Wails applications for Windows, macOS, and Linux.
 
 All workflows are under `.github/workflows/` and are called with `workflow_call`.
 
@@ -62,6 +63,30 @@ jobs:
       node_version: "20"
       package_manager: "npm"   # or "pnpm" / "yarn"
       # build_script: "skip"    # if you don't need a build step
+```
+
+```yaml
+# .github/workflows/build-wails-app.yml
+name: Build Wails App on Release
+on:
+  release:
+    types: [published]
+jobs:
+  build-wails-app:
+    uses: Psidra/actions/.github/workflows/build-wails-app.yml@v1
+    with:
+      app_name: "Tailmate"
+      go_version: "1.21"
+      wails_version: "v2"
+      node_version: "20"
+    secrets:
+      WINDOWS_CERT_BASE64: ${{ secrets.WINDOWS_CERT_BASE64 }}
+      WINDOWS_CERT_PASSWORD: ${{ secrets.WINDOWS_CERT_PASSWORD }}
+      APPLE_CERT_BASE64: ${{ secrets.APPLE_CERT_BASE64 }}
+      APPLE_CERT_PASSWORD: ${{ secrets.APPLE_CERT_PASSWORD }}
+      APPLE_ID: ${{ secrets.APPLE_ID }}
+      APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+      APPLE_APP_PASSWORD: ${{ secrets.APPLE_APP_PASSWORD }}
 ```
 
 ## Notes
